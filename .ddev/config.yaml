@@ -1,0 +1,43 @@
+name: lupus-decoupled-pantheon
+type: drupal
+docroot: web
+php_version: "8.3"
+webserver_type: nginx-fpm
+router_http_port: "80"
+router_https_port: "443"
+xdebug_enabled: true
+additional_hostnames:
+  - lupus-nuxt
+additional_fqdns: []
+database:
+  type: mariadb
+  version: "10.6"
+hooks:
+  post-start:
+    - exec: |
+        [[ -d frontend ]] || git clone ${FRONTEND_REPOSITORY:-https://github.com/drunomics/lupus-decoupled-nuxt-starter} ${FRONTEND_BRANCH:+--branch=$FRONTEND_BRANCH} frontend
+        cd frontend && npm i
+        pm2 start "npm run dev" --name nuxt
+use_dns_when_possible: true
+composer_version: ""
+web_environment:
+  - NUXT_HOST=0.0.0.0
+  - NUXT_PORT=3000
+  - PHAPP_ENV_MODE=development
+  - LUPUS_DECOUPLED_AUTO_ENABLE=1
+  - FRONTEND_REPOSITORY=${FRONTEND_REPOSITORY:-https://github.com/drunomics/lupus-decoupled-nuxt-starter}
+  - FRONTEND_BRANCH=${FRONTEND_BRANCH-}
+  - BACKEND_URL=${BACKEND_URL:-https://lupus-decoupled-pantheon.ddev.site}
+  - FRONTEND_URL=${FRONTEND_URL:-https://lupus-nuxt.ddev.site}
+  # Drush base URL for generated links
+  - DRUSH_OPTIONS_URI=${BACKEND_URL:-https://lupus-decoupled-pantheon.ddev.site}
+  # Frontend env vars - use BACKEND_URL
+  - NUXT_PUBLIC_DRUPAL_CE_DRUPAL_BASE_URL=${BACKEND_URL:-https://lupus-decoupled-pantheon.ddev.site}
+  - NEXT_PUBLIC_DRUPAL_BASE_URL=${BACKEND_URL:-https://lupus-decoupled-pantheon.ddev.site}
+nodejs_version: "22"
+corepack_enable: false
+web_extra_exposed_ports:
+  - name: lupus-nuxt
+    container_port: 3000
+    http_port: 3080
+    https_port: 3433
